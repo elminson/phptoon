@@ -2,6 +2,7 @@
 
 use PhpToon\ToonEncoder;
 use PhpToon\ToonDecoder;
+use PhpToon\ToonDecoderLenient;
 use PhpToon\Support\EncodeOptions;
 use PhpToon\Utilities\ToonComparison;
 use PhpToon\Utilities\TokenEstimator;
@@ -112,5 +113,33 @@ if (!function_exists('toon_savings')) {
             'percent' => $comparison['savings_percent'],
             'tokens' => $comparison['savings_tokens'],
         ];
+    }
+}
+
+if (!function_exists('toon_decode_lenient')) {
+    /**
+     * Decode TOON format with lenient parsing (recovers from errors)
+     *
+     * @param string $toon
+     * @param array|null $errors Output parameter for collected errors
+     * @return mixed
+     */
+    function toon_decode_lenient(string $toon, ?array &$errors = null): mixed
+    {
+        return ToonDecoderLenient::decode($toon, $errors);
+    }
+}
+
+if (!function_exists('toon_size')) {
+    /**
+     * Calculate the size of TOON encoded data in bytes
+     *
+     * @param mixed $data
+     * @param EncodeOptions|null $options
+     * @return int
+     */
+    function toon_size(mixed $data, ?EncodeOptions $options = null): int
+    {
+        return strlen(ToonEncoder::encode($data, $options));
     }
 }
