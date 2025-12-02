@@ -34,12 +34,61 @@ class ToonEncoder
         return match (true) {
             is_null($value) => 'null',
             is_bool($value) => $value ? 'true' : 'false',
-            is_int($value) || is_float($value) => (string) $value,
+            is_int($value) => $this->encodeNumber($value),
+            is_float($value) => $this->encodeFloat($value),
             is_string($value) => $this->encodeString($value),
             is_array($value) => $this->encodeArray($value, $depth),
+            $value instanceof \DateTimeInterface => $this->encodeDateTime($value),
+            $value instanceof \BackedEnum => $this->encodeBackedEnum($value),
+            $value instanceof \UnitEnum => $this->encodeUnitEnum($value),
             is_object($value) => $this->encodeObject($value, $depth),
             default => throw new \InvalidArgumentException('Unsupported type: ' . get_debug_type($value)),
         };
+    }
+
+    /**
+     * Encode an integer
+     */
+    private function encodeNumber(int $value): string
+    {
+        return (string) $value;
+    }
+
+    /**
+     * Encode a float, handling special values
+     */
+    private function encodeFloat(float $value): string
+    {
+        if (is_nan($value) || is_infinite($value)) {
+            return 'null';
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * Encode DateTime to ISO 8601 format
+     */
+    private function encodeDateTime(\DateTimeInterface $dateTime): string
+    {
+        return $this->encodeString($dateTime->format(\DateTime::ATOM));
+    }
+
+    /**
+     * Encode BackedEnum to its value
+     */
+    private function encodeBackedEnum(\BackedEnum $enum): string|int
+    {
+        $value = $enum->value;
+        return is_string($value) ? $this->encodeString($value) : $this->encodeNumber($value);
+    }
+
+    /**
+     * Encode UnitEnum to its name
+     */
+    private function encodeUnitEnum(\UnitEnum $enum): string
+    {
+        return $this->encodeString($enum->name);
     }
 
     /**
